@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Tích Số và Ứng Dụng</title>
+    <link rel="icon" href="icon_image/icon_image_web.jpg" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        input, button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+        }
+        .result {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+           
+           
+            padding: 8px;
+            text-align: center;
+        }
+        /* CSS cho tab */
+        .tab {
+            overflow: hidden;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        .tab button {
+            background-color: #f1f1f1;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 16px;
+            margin-right: 5px;
+        }
+        .tab button:hover {
+            background-color: #d8d8d8;
+            text-decoration: underline; /* Gạch chân */
+            color: #4CAF50; /* Màu xanh lá cho chữ */
+            
+        }
+        .tab button.active {
+            background-color: #4CAF50;
+            font-weight: bold;
+            color: #FFFFFF; /* Màu xanh lá cho chữ */
+            text-decoration: underline; /* Gạch chân */
+            border-radius: 15px; 
+            padding: 20px 30px;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+        }
+        .tabcontent.active {
+            display: block;
+        }
+        .result { margin-top: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            
+        }
+        .highlight { background-color: #f9f9f9; padding: 10px; }
+        .input-group { margin-bottom: 10px; }
+        .data-point {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .data-point label {
+            min-width: 50px;
+            font-weight: bold;
+        }
+        .data-point input {
+            width: 80px;
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .approximations {
+            margin: 10px 0;
+            overflow-x: auto; /* Kích hoạt thanh cuộn ngang */
+            white-space: nowrap; /* Ngăn các phần tử xuống dòng */
+            max-width: 100%; /* Đảm bảo không vượt quá container */
+        }
+        .approx-item {
+            display: inline-block; /* Hiển thị ngang */
+            margin-right: 7px; /* Khoảng cách giữa các giá trị */
+            padding: 10px 8px; /* Thêm khoảng cách bên trong mỗi giá trị (chiều cao) */
+        }
+        .centered-formula {
+            text-align: center;
+        }
+
+        /* CSS cho bảng điểm dữ liệu */
+        .regression-table {
+            overflow-x: auto; /* Kích hoạt thanh cuộn ngang */
+            display: block; /* Cho phép cuộn */
+            white-space: nowrap; /* Ngăn các ô xuống dòng */
+            
+        }
+        .regression-table-min-width {
+            min-width: 80px;/* Đảm bảo cột không quá hẹp */
+        }
+
+    </style>
+    <script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+    {% if error %}
+    <div style="color: red;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <h1>Giải Tích Số Và Ứng Dụng</h1>
+
+    <!-- Tab buttons -->
+    <div class="tab">
+        <button class="tablinks {% if active_tab == 'Simpson' %}active{% endif %}" onclick="openTab(event, 'Simpson')">Tính Tích phân</button>
+        <button class="tablinks {% if active_tab == 'Newton' %}active{% endif %}" onclick="openTab(event, 'Newton')">Giải phương trình f(x) = 0</button>
+        <button class="tablinks {% if active_tab == 'Regression' %}active{% endif %}" onclick="openTab(event, 'Regression')">Hồi quy Tuyến tính</button>
+        <button class="tablinks {% if active_tab == 'Euler' %}active{% endif %}" onclick="openTab(event, 'Euler')">Phương trình Vi phân</button>
+    </div>
+
+    <!-- Tab content: Simpson -->
+    <div id="Simpson" class="tabcontent {% if active_tab == 'Simpson' %}active{% endif %}">
+        <h2>Tính Tích phân - PP Simpson một phần ba mở rộng</h2>
+        <form method="POST">
+            <label for="f_input">Nhập f(x):</label>
+            <input type="text" id="f_input" name="f_input" placeholder="Ví dụ: exp(2*x)/(exp(x)+1),(không viết hoa)" required>
+
+            <label for="a">Nhập cận dưới:</label>
+            <input type="number" id="a" name="a" step="any" placeholder="a" required>
+
+            <label for="b">Nhập cận trên:</label>
+            <input type="number" id="b" name="b" step="any" placeholder="b" required>
+
+            <label for="n">Nhập n:</label>
+            <input type="number" id="n" name="n" placeholder="n" required>
+
+            <button style="background-color: #0000ff; color: #FFFFFF; border-radius: 5px; padding: 10px 20px;" name="simpson">Tính tích phân</button>
+        </form>
+
+        {% if result_simpson %}
+        <div class="result">
+            <h3><span>\(\displaystyle \int_{ {{ result_simpson.a }} }^{ {{ result_simpson.b }} }{{ result_simpson.formatted_f }} dx;\quad n = {{ result_simpson.n }} \) </span></h3>
+            <h3>Bảng tính:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th><span>\(i\)</span></th>
+                        <th><span>\(x_i\)</span></th>
+                        <th><span>\(\text{Chẵn}\)</span></th>
+                        <th><span>\(\text{Lẻ}\)</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_rows %}
+                    <tr>
+                        <td><span>\({{ row.j }}\)</span></td>
+                        <td><span>\({{ row.x_i }}\)</span></td>
+                        <td><span>\({{ row.even }}\)</span></td>
+                        <td><span>\({{ row.odd }}\)</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h2>Kết quả:</h2>
+            <h3><span>\(f(x)={{ result_simpson.formatted_f }};\quad h={{ result_simpson.h_latex }}= {{ result_simpson.h }}\)</span></h3>
+            <p><span>\(\text{Đầu + Cuối} = {{ result_simpson.A }}\)</span></p>
+            <p><span>\(2\Sigma_{\text{chẵn}} = {{ result_simpson.B }}\)</span></p>
+            <p><span>\(4\Sigma_{\text{lẻ}} = {{ result_simpson.C }}\)</span></p>
+            <p><span>\({{ result_simpson.integral_expr }}\)</span></p>
+            <p><span>\(\quad={{ result_simpson.I }}\)</span></p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Tab content: Newton -->
+    <div id="Newton" class="tabcontent {% if active_tab == 'Newton' %}active{% endif %}">
+        <h2>Giải phương trình f(x) = 0 - PP Tiếp Tuyến (Newton) </h2>
+        <form method="POST">
+            <label for="f_input_newton">Nhập f(x):</label>
+            <input type="text" id="f_input_newton" name="f_input" placeholder="Ví dụ: x**3 - x - 1,(không viết hoa)" required>
+
+            <label for="a_newton">Nhập đoạn từ (a):</label>
+            <input type="number" id="a_newton" name="a" step="any" placeholder="a" required>
+
+            <label for="b_newton">Đến (b):</label>
+            <input type="number" id="b_newton" name="b" step="any" placeholder="b" required>
+
+            <label for="sll">Nhập số lần lặp:</label>
+            <input type="number" id="sll" name="sll" placeholder="Số lần lặp" required>
+
+            <button style="background-color: #0000ff; color: #FFFFFF; border-radius: 5px; padding: 10px 20px;" name="newton">Giải phương trình</button>
+        </form>
+
+        {% if result_newton %}
+        <div class="result">
+            <h3>Kết quả giải phương trình:</h3>
+            <p><span>\(f(x)={{ result_newton.formatted_f }}\)</span></p>
+            <p><span>\(\to f'(x)={{ result_newton.formatted_f_prime }}> 0 \text{ }∀ \text{ } x ∈ [{{ result_newton.a }};{{ result_newton.b }}]\)</span></p>
+            <p><span>\(\to f^"(x)={{ result_newton.formatted_f_prime2 }}> 0 \text{ }∀ \text{ } x ∈ [{{ result_newton.a }};{{ result_newton.b }}]\)</span></p>
+            
+            <h3>Xây dựng dãy <span>\({\{x_n\}:}\)</span></h3>
+            <p><span>\( f(a)f^"(a) = f({{ result_newton.a }})f^"({{ result_newton.a }}) = {{ result_newton.condition }} \)</span></p>
+            <p><span>\(\quad \to x_0 = {{ result_newton.x0 }}\)</span></p>
+
+            <h3 class="centered-formula"><span>\(x_{n+1} = x_{n} - \frac{f(x_{n})}{f'(x_{n})}= {{ result_newton.newton_formula }}\)</span></h3>
+
+            <div class="approximations">
+                {% for x in result_newton.approximations %}
+                    <span class="approx-item">\(x_{{ loop.index }} = {{ x }}\){% if not loop.last %}; {% endif %}</span>
+                {% endfor %}
+            </div>
+
+            <h3>Đánh giá sai số:</h3>
+            <p>
+                \( m = \min_{[{{ result_newton.a }};{{ result_newton.b }}]} |f'(x)| = \min(|f'({{ result_newton.a }})|; |f'({{ result_newton.b }})|) = \min({{ result_newton.f_prime_a }}; {{ result_newton.f_prime_b }}) = {{ result_newton.fmin }} \)
+            </p>
+            <p>
+                \( M = \max_{[{{ result_newton.a }};{{ result_newton.b }}]} |f^"(x)| = \max(|f^"({{ result_newton.a }})|; |f''({{ result_newton.b }})|) = \max({{ result_newton.f_prime2_a }}; {{ result_newton.f_prime2_b }}) = {{ result_newton.fmax }} \)
+            </p>
+            <h3>
+                \(\qquad |x_{{ result_newton.sll }} - x^*| \leq \frac{M}{2m} (x_{{ result_newton.sll }} - x_{{ result_newton.sll_minus_1 }})^2 \)
+            </h3>
+            <p>
+                \(\qquad \qquad \qquad \quad \leq {{ result_newton.m_over_2m }} \cdot {{ result_newton.diff_squared }} = {{ result_newton.error_estimation }} \)
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Tab content: Regression -->
+    <div id="Regression" class="tabcontent {% if active_tab == 'Regression' %}active{% endif %}">
+        <h2>Hồi Quy Tuyến tính - PP Bình Phương Cực Tiểu </h2>
+        {% if error %}
+        <div style="color: red;">
+            {{ error }}
+        </div>
+        {% endif %}
+        <form method="POST">
+            <div class="input-group">
+                <label for="f_a_input">Nhập hệ thức a:</label>
+                <input type="text" id="f_a_input" name="f_a_input" placeholder="Ví dụ: x, x**2, sin(x), ln(x)" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="f_b_input">Nhập hệ thức b:</label>
+                <input type="text" id="f_b_input" name="f_b_input" placeholder="Ví dụ: 1, x, exp(x)" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="f_free_input">Nhập hệ thức tự do:</label>
+                <input type="text" id="f_free_input" name="f_free_input" placeholder="Ví dụ: 0, x**2, cos(x)" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="n_regression">Nhập số điểm dữ liệu (n):</label>
+                <input type="number" id="n_regression" name="n_regression" min="1" required onchange="generateRegressionInputs()">
+            </div>
+            
+            <div id="regression_data_points">
+                <!-- Data points will be generated here -->
+            </div>
+            
+            <button type="submit" name="regression" style="background-color: #005eb8; color: white;">Tính Hồi quy</button>
+        </form>
+
+        {% if error %}
+        <div style="color: red;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if result_regression %}
+        <div class="result">
+            <h2>Kết quả Hồi quy Tuyến tính</h2>
+            
+            <div class="step">
+                <h3>Hàm số</h3>
+                <div class="math">\[ y = {{ result_regression.formatted_f }} \]</div>
+            </div>
+            <div class="step">
+                <h3>Các điểm dữ liệu</h3>
+                <table class="regression-table">
+                    <thead>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="regression-table-min-width"><span>\(x_k\)</span></td> <!-- Nhãn x_k -->
+                            {% for row in regression_table %}
+                                <td class="regression-table-min-width" ><span>\({{ row.x }}\)</span></td> <!-- Giá trị x_k -->
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="regression-table-min-width"><span>\(y_k\)</span></td> <!-- Nhãn y_k -->
+                            {% for row in regression_table %}
+                                <td class="regression-table-min-width"><span>\({{ row.y }}\)</span></td> <!-- Giá trị y_k -->
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+            <div class="step">
+                <h3>Hàm S cần cực tiểu hóa</h3>
+                <div class="math">\[ S = \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.formatted_s }} \right) \]</div>
+            </div>
+            
+            <div class="step">
+                <h3>Đạo hàm riêng</h3>
+                <div class="math">\[ \frac{\partial S}{\partial a} = \sum_{k=1}^{ {{ result_regression.n }} } 2 \cdot \left( {{ result_regression.formatted_s_diff_a }} \right) \]</div>
+                <div class="math">\[ \frac{\partial S}{\partial b} = \sum_{k=1}^{ {{ result_regression.n }} } 2 \cdot \left( {{ result_regression.formatted_s_diff_b }} \right) \]</div>
+            </div>
+
+            <div class="step">
+                <h3>Biến đổi</h3>
+                <div class="math">
+                    \[
+                    \left\{
+                      \begin{aligned}
+                        & \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.hpt1[0] }} \right)a + \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.hpt1[1] }} \right)b + \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.hpt1[2] }} \right) - \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.hpt1[3] }} \right) = 0 \\
+                        & \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.hpt2[0] }} \right)a + \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.hpt2[1] }} \right)b + \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.hpt2[2] }} \right) - \sum_{k=1}^{ {{ result_regression.n }} } \left( {{ result_regression.hpt2[3] }} \right) = 0
+                      \end{aligned}
+                    \right.
+                    \]
+                </div>
+            </div>
+
+            <div class="step">
+                <h3>Hệ phương trình</h3>
+                <div class="highlight">
+                    <div class="math">
+                        \[
+                        \left\{
+                          \begin{aligned}
+                            & {{ result_regression.he_pt1[0] }}a + {{ result_regression.he_pt1[1] }}b + {{ result_regression.he_pt1[2] }} + {{ result_regression.he_pt1[3] }} = 0 \\
+                            & {{ result_regression.he_pt2[0] }}a + {{ result_regression.he_pt2[1] }}b + {{ result_regression.he_pt2[2] }} + {{ result_regression.he_pt2[3] }} = 0
+                          \end{aligned}
+                        \right.
+                        \]
+                    </div>
+                </div>
+                <h3>Đơn giản hóa:</h3>
+                <div class="highlight">
+                    <div class="math">
+                        \[
+                        \left\{
+                          \begin{aligned}
+                            & {{ result_regression.f1 }} \\
+                            & {{ result_regression.f2 }}
+                          \end{aligned}
+                        \right.
+                        \]
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <h3>Nghiệm hệ phương trình</h3>
+                <div class="highlight">
+                    <div class="math">
+                        \[
+                        \left\{
+                          \begin{aligned}
+                            & a = {{ result_regression.a }} \\
+                            & b = {{ result_regression.b }}
+                          \end{aligned}
+                        \right.
+                        \]
+                    </div>
+                </div>
+                <h3>Vậy hàm hồi quy có dạng:</h3>
+                <div class="math">
+                    \[ y = {{ result_regression.final_equation | safe }} \]
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Tab content: Euler -->
+    <div id="Euler" class="tabcontent {% if active_tab == 'Euler' %}active{% endif %}">
+        <h2>Giải Phương trình Vi phân - PP Euler Cải Tiến</h2>
+        {% if error %}
+        <div style="color: red;">
+            {{ error }}
+        </div>
+        {% endif %}
+        <form method="POST">
+            <div class="input-group">
+                <label for="y_diff_input">Nhập y' = f(x, y):</label>
+                <input type="text" id="y_diff_input" name="y_diff_input" placeholder="Ví dụ: x + y" required>
+            </div>
+            <div class="input-group">
+                <label for="x0">Nhập x0:</label>
+                <input type="number" id="x0" name="x0" step="any" placeholder="x0" required>
+            </div>
+            <div class="input-group">
+                <label for="y0">Nhập y0:</label>
+                <input type="number" id="y0" name="y0" step="any" placeholder="y0" required>
+            </div>
+            <div class="input-group">
+                <label for="x1">Nhập x1:</label>
+                <input type="number" id="x1" name="x1" step="any" placeholder="x1" required>
+            </div>
+            <div class="input-group">
+                <label for="x2">Nhập x2:</label>
+                <input type="number" id="x2" name="x2" step="any" placeholder="x2" required>
+            </div>
+            <div class="input-group">
+                <label for="h">Nhập h:</label>
+                <input type="number" id="h" name="h" step="any" placeholder="h" required>
+            </div>
+            <div class="input-group">
+                <label for="n">Nhập số lần lặp:</label>
+                <input type="number" id="n" name="n" min="1" placeholder="n" required>
+            </div>
+            <button type="submit" name="euler" style="background-color: #005eb8; color: white;">Tính Euler</button>
+        </form>
+
+        {% if result_euler %}
+        <div class="result">
+            <h2>Kết quả Euler Cải tiến</h2>
+            <h3><span>\( y' = {{ result_euler.y_diff }}; \qquad h = {{ result_euler.h }} \)</span></h3>
+            <p><span>\(x_0 = { {{result_euler.x0}} }, \quad y_0 = { {{result_euler.y0}} }, \quad x_1 = { {{result_euler.x1}} }, \quad x_2 = { {{result_euler.x2}} }, \)</span></p>
+            
+            <h3><strong>Tính </strong><span>\(y_1\)</span></h3>
+            <p>
+                <span>
+                    \(
+                        \left\{\begin{aligned}
+                        & y_1^{(0)} = y_0 + h \left( {{ result_euler.y_diff_y1_0 }} \right) = {{ result_euler.s0_y1 }} \\
+                        & y_1^{(k+1)} = y_0 + \frac{h}{2} \left[ \left( {{ result_euler.y_diff_y1_0 }} \right) + \left( {{ result_euler.y_diff_y1_k }} \right) \right]
+                        \end{aligned}\right.
+                    \)
+                </span>
+            </p>
+            
+            
+            <div class="approximations">
+                {% for y in result_euler.sk_y1 %}
+                    <span class="approx-item">\( y_1^{( {{ loop.index }} )} = {{ y }} \){% if not loop.last %}; {% endif %}</span>
+                {% endfor %}
+            </div>
+            <h3><strong>Tính </strong><span>\(y_2\)</span></h3>
+            <p>
+                <span>
+                  \( 
+                  \left\{\begin{aligned}
+                    & y_2^{(0)} = y_1 + h \left( {{ result_euler.y_diff_y2_0 }} \right) = {{ result_euler.s0_y2 }} \\
+                    & y_2^{(k+1)} = y_1 + \frac{h}{2} \left[ \left( {{ result_euler.y_diff_y2_0 }} \right) + \left( {{ result_euler.y_diff_y2_k }} \right) \right]
+                  \end{aligned}\right.
+                  \)
+                </span>
+              </p>
+            <div class="approximations">
+                {% for y in result_euler.sk_y2 %}
+                    <span class="approx-item">\( y_2^{( {{ loop.index }} )} = {{ y }} \){% if not loop.last %}; {% endif %}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <!-- JavaScript để xử lý tab -->
+    <script>
+        function openTab(evt, tabName) {
+            // Ẩn tất cả nội dung tab
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+
+            // Xóa lớp active khỏi tất cả các nút tab
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+
+            // Hiển thị tab hiện tại và thêm lớp active cho nút được nhấn
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+        function generateRegressionInputs() {
+            const n = parseInt(document.getElementById('n_regression').value);
+            const container = document.getElementById('regression_data_points');
+            container.innerHTML = '';
+            
+            if (n <= 0 || isNaN(n)) {
+                alert("Vui lòng nhập số điểm dữ liệu lớn hơn 0.");
+                return;
+            }
+            
+            container.innerHTML = '<h3>Nhập các điểm dữ liệu:</h3><div class="data-points">';
+            // Hàng cho x_k
+            container.innerHTML += `
+                <div class="data-point">
+                    <label>x(k) : </label>
+                    ${Array.from({length: n}, (_, i) => `
+                        <input type="number" id="x_${i}" name="x_${i}" step="any" placeholder=" ${i+1}" required>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Hàng cho y_k
+            container.innerHTML += `
+                <div class="data-point">
+                    <label>y(k) : </label>
+                    ${Array.from({length: n}, (_, i) => `
+                        <input type="number" id="y_${i}" name="y_${i}" step="any" placeholder="${i+1}" required>
+                    `).join('')}
+                </div>
+            `;
+            container.innerHTML += '</div>';
+        }
+        
+        // Initialize MathJax
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            }
+        };
+
+    </script>
+</body>
+</html>
